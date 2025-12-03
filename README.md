@@ -4,7 +4,8 @@ Bit-reproductible math functions across CPU/GPU platform with Fortran interface
 
 Accept PR from pmarguinaud/bitrep repo.
 
-- Add CMakeLists.txt for cmake build
+- Add CMakeLists.txt for cmake build by dareg
+- Add more math intrinsics by npenigaud
 
 ## Usage
 
