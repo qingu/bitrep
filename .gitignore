@@ -3,3 +3,4 @@
 *.x
 *.mod
 slurm-*.out
+build

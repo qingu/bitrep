@@ -99,6 +99,8 @@ DO I = 1, NVAL
   ZCOSH_Y (I,2) = BR_COSH (ZCOSH_X (I))
   ZPOW_Y  (I,2) = BR_POW(3.14159_JPRB, ZPOW_X(I))
 ENDDO
+
+!ZGAMMA_Y(3,2) = BR_GAMMA(ZGAMMA_X(3))
 !$acc end serial
 
 !$acc end data

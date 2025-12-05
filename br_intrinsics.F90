@@ -115,17 +115,17 @@ IMPORT C_DOUBLE
 REAL(KIND=C_DOUBLE), VALUE, INTENT(IN) :: P
 END FUNCTION
 
-PURE REAL(KIND=C_DOUBLE) FUNCTION BR_GAMMA_C(P) BIND(C,NAME="br_gamma")
-!$ACC ROUTINE SEQ
-IMPORT C_DOUBLE
-REAL(KIND=C_DOUBLE), VALUE, INTENT(IN) :: P
-END FUNCTION
+!PURE REAL(KIND=C_DOUBLE) FUNCTION BR_GAMMA_C(P) BIND(C,NAME="br_gamma")
+!!$ACC ROUTINE SEQ
+!IMPORT C_DOUBLE
+!REAL(KIND=C_DOUBLE), VALUE, INTENT(IN) :: P
+!END FUNCTION
 
-PURE REAL(KIND=C_DOUBLE) FUNCTION BR_LOG_GAMMA_C(P) BIND(C,NAME="br_log_gamma")
-!$ACC ROUTINE SEQ
-IMPORT C_DOUBLE
-REAL(KIND=C_DOUBLE), VALUE, INTENT(IN) :: P
-END FUNCTION
+!PURE REAL(KIND=C_DOUBLE) FUNCTION BR_LOG_GAMMA_C(P) BIND(C,NAME="br_log_gamma")
+!!$ACC ROUTINE SEQ
+!IMPORT C_DOUBLE
+!REAL(KIND=C_DOUBLE), VALUE, INTENT(IN) :: P
+!END FUNCTION
 
 PURE REAL(KIND=C_DOUBLE) FUNCTION BR_ERF_C(P) BIND(C,NAME="br_erf")
 !$ACC ROUTINE SEQ
@@ -240,13 +240,17 @@ INTERFACE BR_ERFC
 END INTERFACE
 
 INTERFACE BR_GAMMA
-  MODULE PROCEDURE BR_GAMMA_RM
-  MODULE PROCEDURE BR_GAMMA_RD
+  MODULE PROCEDURE BR_GAMMA_X0D_RM
+  MODULE PROCEDURE BR_GAMMA_X1D_RM
+  MODULE PROCEDURE BR_GAMMA_X0D_RD
+  MODULE PROCEDURE BR_GAMMA_X1D_RD
 END INTERFACE
 
 INTERFACE BR_LOG_GAMMA
-  MODULE PROCEDURE BR_LOG_GAMMA_RM
-  MODULE PROCEDURE BR_LOG_GAMMA_RD
+  MODULE PROCEDURE BR_LOG_GAMMA_X0D_RM
+  MODULE PROCEDURE BR_LOG_GAMMA_X1D_RM
+  MODULE PROCEDURE BR_LOG_GAMMA_X0D_RD
+  MODULE PROCEDURE BR_LOG_GAMMA_X1D_RD
 END INTERFACE
 
 CONTAINS
@@ -353,17 +357,11 @@ REAL (KIND=JPRM), INTENT(IN) :: P
 BR_ERFC_RM = BR_ERFC_C(REAL(P,KIND=C_DOUBLE))
 END FUNCTION
 
-ELEMENTAL REAL (KIND=JPRM) FUNCTION BR_GAMMA_RM(P)
-!$ACC ROUTINE SEQ
-REAL (KIND=JPRM), INTENT(IN) :: P
-BR_GAMMA_RM = BR_GAMMA_C(REAL(P,KIND=C_DOUBLE))
-END FUNCTION
-
-ELEMENTAL REAL (KIND=JPRM) FUNCTION BR_LOG_GAMMA_RM(P)
-!$ACC ROUTINE SEQ
-REAL (KIND=JPRM), INTENT(IN) :: P
-BR_LOG_GAMMA_RM = BR_LOG_GAMMA_C(REAL(P,KIND=C_DOUBLE))
-END FUNCTION
+!ELEMENTAL REAL (KIND=JPRM) FUNCTION BR_LOG_GAMMA_RM(P)
+!!$ACC ROUTINE SEQ
+!REAL (KIND=JPRM), INTENT(IN) :: P
+!BR_LOG_GAMMA_RM = BR_LOG_GAMMA_C(REAL(P,KIND=C_DOUBLE))
+!END FUNCTION
 
 ELEMENTAL REAL (KIND=JPRD) FUNCTION BR_SIN_RD(P)
 !$ACC ROUTINE SEQ
@@ -467,17 +465,11 @@ REAL (KIND=JPRD), INTENT(IN) :: P
 BR_ERFC_RD = BR_ERFC_C(REAL(P,KIND=C_DOUBLE))
 END FUNCTION
 
-ELEMENTAL REAL (KIND=JPRD) FUNCTION BR_GAMMA_RD(P)
-!$ACC ROUTINE SEQ
-REAL (KIND=JPRD), INTENT(IN) :: P
-BR_GAMMA_RD = BR_GAMMA_C(REAL(P,KIND=C_DOUBLE))
-END FUNCTION
-
-ELEMENTAL REAL (KIND=JPRD) FUNCTION BR_LOG_GAMMA_RD(P)
-!$ACC ROUTINE SEQ
-REAL (KIND=JPRD), INTENT(IN) :: P
-BR_LOG_GAMMA_RD = BR_LOG_GAMMA_C(REAL(P,KIND=C_DOUBLE))
-END FUNCTION
+!ELEMENTAL REAL (KIND=JPRD) FUNCTION BR_LOG_GAMMA_RD(P)
+!!$ACC ROUTINE SEQ
+!REAL (KIND=JPRD), INTENT(IN) :: P
+!BR_LOG_GAMMA_RD = BR_LOG_GAMMA_C(REAL(P,KIND=C_DOUBLE))
+!END FUNCTION
 
 ELEMENTAL REAL (KIND=JPRM) FUNCTION BR_ATAN2_RM (PA, PB)
 !$ACC ROUTINE SEQ
@@ -568,5 +560,358 @@ DO J = 1, KPOW
   BR_POWNN = BR_POWNN * KVAL
 ENDDO
 END FUNCTION
+
+!PURE FUNCTION BR_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
+FUNCTION BR_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
+!
+!!****  *GAMMA * -  Gamma  function
+!!
+!!
+!!    PURPOSE
+!!    -------
+!       The purpose of this function is to compute the Generalized gamma
+!    function of its argument.
+!
+!
+!!**  METHOD
+!!    ------
+!!
+!!    EXTERNAL
+!!    --------
+!!      NONE
+!!
+!!    IMPLICIT ARGUMENTS
+!!    ------------------
+!!      None
+!!
+!!    REFERENCE
+!!    ---------
+!!      Press, Teukolsky, Vetterling and Flannery: Numerical Recipes, 206-207
+!!
+!!    AUTHOR
+!!    ------
+!!      Jean-Pierre Pinty *LA/OMP*
+!!
+!!    MODIFICATIONS
+!!    -------------
+!!      Original     7/11/95
+!!      C. Barthe    9/11/09  add a function for 1D arguments
+!  P. Wautelet 22/06/2022: GAMMA_X0D is now declared PURE
+!
+!*       0. DECLARATIONS
+!           ------------
+!
+!
+IMPLICIT NONE
+
+!$acc routine seq
+
+!
+!*       0.1 declarations of arguments and result
+!
+REAL(KIND=JPRD), INTENT(IN)                     :: PX
+REAL(KIND=JPRD)                                 :: PGAMMA
+!
+!*       0.2 declarations of local variables
+!
+INTEGER                              :: JJ ! Loop index
+REAL(KIND=JPRD)                      :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
+REAL(KInD=JPRD)                      :: ZPI,ZTMP1
+INTEGER(kind=JPRD)                   :: ix
+!
+!-------------------------------------------------------------------------------
+!
+!*       1. SOME CONSTANTS
+!           --------------
+!
+ZCOEF(1) = 76.18009172947146_JPRD
+ZCOEF(2) =-86.50532032941677_JPRD
+ZCOEF(3) = 24.01409824083091_JPRD
+ZCOEF(4) = -1.231739572450155_JPRD
+ZCOEF(5) =  0.1208650973866179E-2_JPRD
+ZCOEF(6) = -0.5395239384953E-5_JPRD
+ZSTP     =  2.5066282746310005_JPRD
+!
+ZPI = 3.1415926535897932384626433832795_JPRD
+!
+!-------------------------------------------------------------------------------
+!
+!*       2. COMPUTE GAMMA
+!           -------------
+!
+IF (PX .LT. 0._JPRD) THEN
+  ZX = 1._JPRD - PX
+ELSE
+  ZX = PX
+END IF
+ZY = ZX
+ZTMP =  ZX + 5.5_JPRD
+ZTMP = (ZX + 0.5_JPRD) * BR_LOG(ZTMP) - ZTMP
+ZSER = 1.000000000190015_JPRD
+ix = transfer(ZTMP,1_JPRD)
+!print*,ix
+!
+DO JJ = 1, 6
+  ZY = ZY + 1.0_JPRD
+  ZSER = ZSER + ZCOEF(JJ) / ZY
+END DO
+!
+IF (PX .LT. 0._JPRD) THEN
+  PGAMMA = ZPI / BR_SIN(ZPI*PX) / BR_EXP(ZTMP + BR_LOG(ZSTP*ZSER/ZX))
+ELSE
+  PGAMMA = BR_EXP(ZTMP + BR_LOG(ZSTP*ZSER/ZX))
+  !ZTMP1 = BR_LOG(ZSTP*ZSER/ZX)
+  !PGAMMA = BR_EXP(ZTMP + ZTMP1)
+!ix = transfer(PGAMMA,1_JPRD)
+!print*,ix
+END IF
+!ix = transfer(ZTMP,1_JPRD)
+!print*,ix
+RETURN
+!
+END FUNCTION BR_GAMMA_X0D_RD
+!
+ PURE FUNCTION BR_GAMMA_X1D_RD(PX)  RESULT(PGAMMA)
+!
+!
+!!****  *GAMMA * -  Gamma  function
+!!
+!!
+!!    PURPOSE
+!!    -------
+!       The purpose of this function is to compute the Generalized gamma
+!    function of its argument.
+!
+!
+!!**  METHOD
+!!    ------
+!!
+!!    EXTERNAL
+!!    --------
+!!      NONE
+!!
+!!    IMPLICIT ARGUMENTS
+!!    ------------------
+!!      None
+!!
+!!    REFERENCE
+!!    ---------
+!!      Press, Teukolsky, Vetterling and Flannery: Numerical Recipes, 206-207
+!!
+!!    AUTHOR
+!!    ------
+!!      Jean-Pierre Pinty *LA/OMP*
+!!
+!!    MODIFICATIONS
+!!    -------------
+!!      Original     7/11/95
+!  P. Wautelet 22/06/2022: GAMMA_X1D is now declared PURE
+!!
+!-------------------------------------------------------------------------------
+!
+!*       0. DECLARATIONS
+!           ------------
+!
+!
+IMPLICIT NONE
+!
+!*       0.1 declarations of arguments and result
+!
+REAL(KIND=JPRD), DIMENSION(:), INTENT(IN)       :: PX
+REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: PGAMMA
+!
+!*       0.2 declarations of local variables
+!
+INTEGER                              :: JJ ! Loop index
+REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: ZSER,ZSTP,ZTMP,ZX,ZY
+REAL(KIND=JPRD)                                 :: ZCOEF(6)
+REAL(KIND=JPRD)                                 :: ZPI
+INTEGER(kind=JPRD), DIMENSION(SIZE(PX))         :: ix
+!
+!-------------------------------------------------------------------------------
+!
+!*       1. SOME CONSTANTS
+!           --------------
+!
+ZCOEF(1) = 76.18009172947146_JPRD
+ZCOEF(2) =-86.50532032941677_JPRD
+ZCOEF(3) = 24.01409824083091_JPRD
+ZCOEF(4) = -1.231739572450155_JPRD
+ZCOEF(5) =  0.1208650973866179E-2_JPRD
+ZCOEF(6) = -0.5395239384953E-5_JPRD
+ZSTP     =  2.5066282746310005_JPRD
+!
+ZPI = 3.1415926535897932384626433832795_JPRD
+ZX(:) = PX(:)
+WHERE ( PX(:)<0.0_JPRD )
+  ZX(:) = 1._JPRD - PX(:)
+END WHERE
+ZY(:) = ZX(:)
+ZTMP(:) =  ZX(:) + 5.5_JPRD
+ZTMP(:) = (ZX(:) + 0.5_JPRD)*BR_LOG(ZTMP(:)) - ZTMP(:)
+ZSER(:) = 1.000000000190015_JPRD
+
+ix(:) = transfer(ZTMP(:),1_JPRD)
+!
+DO JJ = 1 , 6
+  ZY(:) = ZY(:) + 1.0_JPRD
+  ZSER(:) = ZSER(:) + ZCOEF(JJ)/ZY(:)
+END DO
+!
+!PGAMMA(:) = BR_EXP( ZTMP(:) + BR_LOG( ZSTP*ZSER(:)/ZX(:) ) )
+PGAMMA(:) = BR_LOG( ZSTP*ZSER(:)/ZX(:) ) 
+PGAMMA(:) = BR_EXP( ZTMP(:) + PGAMMA(:) )
+WHERE ( PX(:)<0.0_JPRD )
+  PGAMMA(:) = ZPI/BR_SIN(ZPI*PX(:))/PGAMMA(:)
+END WHERE
+RETURN
+!
+END FUNCTION BR_GAMMA_X1D_RD
+
+!ELEMENTAL REAL (KIND=JPRM) FUNCTION BR_GAMMA_X0D_RM(P)
+REAL (KIND=JPRM) FUNCTION BR_GAMMA_X0D_RM(P)
+!$ACC ROUTINE SEQ
+REAL (KIND=JPRM), INTENT(IN) :: P
+BR_GAMMA_X0D_RM = BR_GAMMA_X0D_RD(REAL(P,KIND=JPRD))
+END FUNCTION BR_GAMMA_X0D_RM
+
+PURE FUNCTION BR_GAMMA_X1D_RM(P)
+!$ACC ROUTINE SEQ
+REAL (KIND=JPRM), DIMENSION(:), INTENT(IN) :: P
+REAL (KIND=JPRM), DIMENSION(SIZE(P))       :: BR_GAMMA_X1D_RM
+BR_GAMMA_X1D_RM = BR_GAMMA_X1D_RD(REAL(P,KIND=JPRD))
+END FUNCTION BR_GAMMA_X1D_RM
+
+FUNCTION BR_LOG_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
+!
+!!****  *GAMMA * -  LOG_Gamma  function
+!!
+IMPLICIT NONE
+
+!$acc routine seq
+
+!
+!*       0.1 declarations of arguments and result
+!
+REAL(KIND=JPRD), INTENT(IN)                     :: PX
+REAL(KIND=JPRD)                                 :: PGAMMA
+!
+!*       0.2 declarations of local variables
+!
+INTEGER                              :: JJ ! Loop index
+REAL(KIND=JPRD)                      :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
+REAL(KInD=JPRD)                      :: ZPI,ZTMP1
+INTEGER(kind=JPRD)                   :: ix
+!
+!-------------------------------------------------------------------------------
+!
+!*       1. SOME CONSTANTS
+!           --------------
+!
+ZCOEF(1) = 76.18009172947146_JPRD
+ZCOEF(2) =-86.50532032941677_JPRD
+ZCOEF(3) = 24.01409824083091_JPRD
+ZCOEF(4) = -1.231739572450155_JPRD
+ZCOEF(5) =  0.1208650973866179E-2_JPRD
+ZCOEF(6) = -0.5395239384953E-5_JPRD
+ZSTP     =  2.5066282746310005_JPRD
+!
+ZPI = 3.1415926535897932384626433832795_JPRD
+!
+!-------------------------------------------------------------------------------
+!
+!*       2. COMPUTE GAMMA
+!           -------------
+!
+IF (PX .LT. 0._JPRD) THEN
+  ZX = 1._JPRD - PX
+ELSE
+  ZX = PX
+END IF
+ZY = ZX
+ZTMP =  ZX + 5.5_JPRD
+ZTMP = (ZX + 0.5_JPRD) * BR_LOG(ZTMP) - ZTMP
+ZSER = 1.000000000190015_JPRD
+ix = transfer(ZTMP,1_JPRD)
+!print*,ix
+!
+DO JJ = 1, 6
+  ZY = ZY + 1.0_JPRD
+  ZSER = ZSER + ZCOEF(JJ) / ZY
+END DO
+!
+PGAMMA = ZTMP + BR_LOG(ZSTP*ZSER/ZX)
+RETURN
+!
+END FUNCTION BR_LOG_GAMMA_X0D_RD
+
+PURE FUNCTION BR_LOG_GAMMA_X1D_RD(PX)  RESULT(PGAMMA)
+!
+!
+!!****  *GAMMA * -  LOG Gamma  function
+!!
+IMPLICIT NONE
+!$ACC ROUTINE SEQ
+!
+!*       0.1 declarations of arguments and result
+!
+REAL(KIND=JPRD), DIMENSION(:), INTENT(IN)       :: PX
+REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: PGAMMA
+!
+!*       0.2 declarations of local variables
+!
+INTEGER                              :: JJ ! Loop index
+REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: ZSER,ZSTP,ZTMP,ZX,ZY
+REAL(KIND=JPRD)                                 :: ZCOEF(6)
+REAL(KIND=JPRD)                                 :: ZPI
+INTEGER(kind=JPRD), DIMENSION(SIZE(PX))         :: ix
+!
+!-------------------------------------------------------------------------------
+!
+!*       1. SOME CONSTANTS
+!           --------------
+!
+ZCOEF(1) = 76.18009172947146_JPRD
+ZCOEF(2) =-86.50532032941677_JPRD
+ZCOEF(3) = 24.01409824083091_JPRD
+ZCOEF(4) = -1.231739572450155_JPRD
+ZCOEF(5) =  0.1208650973866179E-2_JPRD
+ZCOEF(6) = -0.5395239384953E-5_JPRD
+ZSTP     =  2.5066282746310005_JPRD
+!
+ZPI = 3.1415926535897932384626433832795_JPRD
+ZX(:) = PX(:)
+WHERE ( PX(:)<0.0_JPRD )
+  ZX(:) = 1._JPRD - PX(:)
+END WHERE
+ZY(:) = ZX(:)
+ZTMP(:) =  ZX(:) + 5.5_JPRD
+ZTMP(:) = (ZX(:) + 0.5_JPRD)*BR_LOG(ZTMP(:)) - ZTMP(:)
+ZSER(:) = 1.000000000190015_JPRD
+
+ix(:) = transfer(ZTMP(:),1_JPRD)
+!
+DO JJ = 1 , 6
+  ZY(:) = ZY(:) + 1.0_JPRD
+  ZSER(:) = ZSER(:) + ZCOEF(JJ)/ZY(:)
+END DO
+!
+PGAMMA(:) = ZTMP(:) + BR_LOG( ZSTP*ZSER(:)/ZX(:) ) 
+RETURN
+!
+END FUNCTION BR_LOG_GAMMA_X1D_RD
+
+REAL (KIND=JPRM) FUNCTION BR_LOG_GAMMA_X0D_RM(P)
+!$ACC ROUTINE SEQ
+REAL (KIND=JPRM), INTENT(IN) :: P
+BR_LOG_GAMMA_X0D_RM = BR_LOG_GAMMA_X0D_RD(REAL(P,KIND=JPRD))
+END FUNCTION BR_LOG_GAMMA_X0D_RM
+
+PURE FUNCTION BR_LOG_GAMMA_X1D_RM(P)
+!$ACC ROUTINE SEQ
+REAL (KIND=JPRM), DIMENSION(:), INTENT(IN) :: P
+REAL (KIND=JPRM), DIMENSION(SIZE(P))       :: BR_LOG_GAMMA_X1D_RM
+BR_LOG_GAMMA_X1D_RM = BR_LOG_GAMMA_X1D_RD(REAL(P,KIND=JPRD))
+END FUNCTION BR_LOG_GAMMA_X1D_RM
 
 END MODULE
