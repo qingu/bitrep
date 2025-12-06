@@ -6,6 +6,7 @@ Accept PR from pmarguinaud/bitrep repo.
 
 - Add CMakeLists.txt for cmake build by dareg
 - Add more math intrinsics by npenigaud
+- Add gamma and log_gamma function 
 
 ## Usage
 
@@ -20,3 +21,4 @@ ls build/*.x
 - Original source: https://github.com/andyspiros/bitrep
 - Then modified by Philippe Wautelet. Added a Fortran 2003 module file to interface Fortran and C
   Fork from https://github.com/pmarguinaud/bitrep
+- Gamma and Log_Gamma functions from Jean-Pierre Pinty
