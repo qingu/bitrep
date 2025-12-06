@@ -8,8 +8,12 @@ add_executable(br_main.cpu.x
 	parkind1.F90
 )
 target_compile_definitions(br_main.cpu.x PUBLIC ARCH="cpu")
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+	target_compile_options(br_main.cpu.x PUBLIC -ffree-line-length-none)
+endif()
 set_property(TARGET br_main.cpu.x PROPERTY LINKER_LANGUAGE Fortran)
 
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "NVHPC")
 find_package(OpenACC)
 if(${OpenACC_CXX_FOUND})
 	add_executable(br_main.gpu.x
@@ -22,4 +26,5 @@ if(${OpenACC_CXX_FOUND})
 	target_compile_options(br_main.gpu.x PUBLIC -acc=gpu)
 	target_link_libraries(br_main.gpu.x PUBLIC OpenACC::OpenACC_Fortran)
 	set_property(TARGET br_main.gpu.x PROPERTY LINKER_LANGUAGE Fortran)
+endif()
 endif()
