@@ -615,7 +615,7 @@ REAL(KIND=JPRD)                                 :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD)                      :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
+REAL(KIND=JPRD),VOLATILE             :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
 REAL(KInD=JPRD)                      :: ZPI,ZTMP1
 INTEGER(kind=JPRD)                   :: ix
 !
@@ -648,9 +648,6 @@ ZY = ZX
 ZTMP =  ZX + 5.5_JPRD
 ZTMP = (ZX + 0.5_JPRD) * BR_LOG(ZTMP) - ZTMP
 ZSER = 1.000000000190015_JPRD
-ix = transfer(ZTMP,1_JPRD)
-!print*,ix
-!
 DO JJ = 1, 6
   ZY = ZY + 1.0_JPRD
   ZSER = ZSER + ZCOEF(JJ) / ZY
@@ -660,13 +657,7 @@ IF (PX .LT. 0._JPRD) THEN
   PGAMMA = ZPI / BR_SIN(ZPI*PX) / BR_EXP(ZTMP + BR_LOG(ZSTP*ZSER/ZX))
 ELSE
   PGAMMA = BR_EXP(ZTMP + BR_LOG(ZSTP*ZSER/ZX))
-  !ZTMP1 = BR_LOG(ZSTP*ZSER/ZX)
-  !PGAMMA = BR_EXP(ZTMP + ZTMP1)
-!ix = transfer(PGAMMA,1_JPRD)
-!print*,ix
 END IF
-!ix = transfer(ZTMP,1_JPRD)
-!print*,ix
 RETURN
 !
 END FUNCTION BR_GAMMA_X0D_RD
@@ -723,10 +714,9 @@ REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: ZSER,ZSTP,ZTMP,ZX,ZY
+REAL(KIND=JPRD), DIMENSION(SIZE(PX)),VOLATILE   :: ZSER,ZSTP,ZTMP,ZX,ZY
 REAL(KIND=JPRD)                                 :: ZCOEF(6)
 REAL(KIND=JPRD)                                 :: ZPI
-INTEGER(kind=JPRD), DIMENSION(SIZE(PX))         :: ix
 !
 !-------------------------------------------------------------------------------
 !
@@ -751,7 +741,6 @@ ZTMP(:) =  ZX(:) + 5.5_JPRD
 ZTMP(:) = (ZX(:) + 0.5_JPRD)*BR_LOG(ZTMP(:)) - ZTMP(:)
 ZSER(:) = 1.000000000190015_JPRD
 
-ix(:) = transfer(ZTMP(:),1_JPRD)
 !
 DO JJ = 1 , 6
   ZY(:) = ZY(:) + 1.0_JPRD
@@ -799,9 +788,8 @@ REAL(KIND=JPRD)                                 :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD)                      :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
+REAL(KIND=JPRD),VOLATILE             :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
 REAL(KInD=JPRD)                      :: ZPI,ZTMP1
-INTEGER(kind=JPRD)                   :: ix
 !
 !-------------------------------------------------------------------------------
 !
@@ -832,8 +820,6 @@ ZY = ZX
 ZTMP =  ZX + 5.5_JPRD
 ZTMP = (ZX + 0.5_JPRD) * BR_LOG(ZTMP) - ZTMP
 ZSER = 1.000000000190015_JPRD
-ix = transfer(ZTMP,1_JPRD)
-!print*,ix
 !
 DO JJ = 1, 6
   ZY = ZY + 1.0_JPRD
@@ -861,10 +847,9 @@ REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: ZSER,ZSTP,ZTMP,ZX,ZY
+REAL(KIND=JPRD), DIMENSION(SIZE(PX)),VOLATILE   :: ZSER,ZSTP,ZTMP,ZX,ZY
 REAL(KIND=JPRD)                                 :: ZCOEF(6)
 REAL(KIND=JPRD)                                 :: ZPI
-INTEGER(kind=JPRD), DIMENSION(SIZE(PX))         :: ix
 !
 !-------------------------------------------------------------------------------
 !
@@ -889,7 +874,6 @@ ZTMP(:) =  ZX(:) + 5.5_JPRD
 ZTMP(:) = (ZX(:) + 0.5_JPRD)*BR_LOG(ZTMP(:)) - ZTMP(:)
 ZSER(:) = 1.000000000190015_JPRD
 
-ix(:) = transfer(ZTMP(:),1_JPRD)
 !
 DO JJ = 1 , 6
   ZY(:) = ZY(:) + 1.0_JPRD
