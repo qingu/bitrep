@@ -562,7 +562,7 @@ ENDDO
 END FUNCTION
 
 !PURE FUNCTION BR_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
-FUNCTION BR_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
+PURE FUNCTION BR_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
 !
 !!****  *GAMMA * -  Gamma  function
 !!
@@ -615,7 +615,7 @@ REAL(KIND=JPRD)                                 :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD),VOLATILE             :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
+REAL(KIND=JPRD)                      :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
 REAL(KInD=JPRD)                      :: ZPI,ZTMP1
 INTEGER(kind=JPRD)                   :: ix
 !
@@ -652,6 +652,7 @@ DO JJ = 1, 6
   ZY = ZY + 1.0_JPRD
   ZSER = ZSER + ZCOEF(JJ) / ZY
 END DO
+ix = transfer(ZSER, ix)
 !
 IF (PX .LT. 0._JPRD) THEN
   PGAMMA = ZPI / BR_SIN(ZPI*PX) / BR_EXP(ZTMP + BR_LOG(ZSTP*ZSER/ZX))
@@ -714,9 +715,10 @@ REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD), DIMENSION(SIZE(PX)),VOLATILE   :: ZSER,ZSTP,ZTMP,ZX,ZY
+REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: ZSER,ZSTP,ZTMP,ZX,ZY
 REAL(KIND=JPRD)                                 :: ZCOEF(6)
 REAL(KIND=JPRD)                                 :: ZPI
+INTEGER(KIND=JPRD), DIMENSION(SIZE(PX))         :: IX
 !
 !-------------------------------------------------------------------------------
 !
@@ -746,6 +748,7 @@ DO JJ = 1 , 6
   ZY(:) = ZY(:) + 1.0_JPRD
   ZSER(:) = ZSER(:) + ZCOEF(JJ)/ZY(:)
 END DO
+ix = transfer(ZSER, 0_JPRD)
 !
 !PGAMMA(:) = BR_EXP( ZTMP(:) + BR_LOG( ZSTP*ZSER(:)/ZX(:) ) )
 PGAMMA(:) = BR_LOG( ZSTP*ZSER(:)/ZX(:) ) 
@@ -758,7 +761,7 @@ RETURN
 END FUNCTION BR_GAMMA_X1D_RD
 
 !ELEMENTAL REAL (KIND=JPRM) FUNCTION BR_GAMMA_X0D_RM(P)
-REAL (KIND=JPRM) FUNCTION BR_GAMMA_X0D_RM(P)
+PURE REAL (KIND=JPRM) FUNCTION BR_GAMMA_X0D_RM(P)
 !$ACC ROUTINE SEQ
 REAL (KIND=JPRM), INTENT(IN) :: P
 BR_GAMMA_X0D_RM = BR_GAMMA_X0D_RD(REAL(P,KIND=JPRD))
@@ -771,7 +774,7 @@ REAL (KIND=JPRM), DIMENSION(SIZE(P))       :: BR_GAMMA_X1D_RM
 BR_GAMMA_X1D_RM = BR_GAMMA_X1D_RD(REAL(P,KIND=JPRD))
 END FUNCTION BR_GAMMA_X1D_RM
 
-FUNCTION BR_LOG_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
+PURE FUNCTION BR_LOG_GAMMA_X0D_RD(PX)  RESULT(PGAMMA)
 !
 !!****  *GAMMA * -  LOG_Gamma  function
 !!
@@ -788,8 +791,9 @@ REAL(KIND=JPRD)                                 :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD),VOLATILE             :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
+REAL(KIND=JPRD)                      :: ZSER,ZSTP,ZTMP,ZX,ZY,ZCOEF(6)
 REAL(KInD=JPRD)                      :: ZPI,ZTMP1
+INTEGER(kind=JPRD)                   :: ix
 !
 !-------------------------------------------------------------------------------
 !
@@ -825,6 +829,7 @@ DO JJ = 1, 6
   ZY = ZY + 1.0_JPRD
   ZSER = ZSER + ZCOEF(JJ) / ZY
 END DO
+ix = transfer(ZSER, ix)
 !
 PGAMMA = ZTMP + BR_LOG(ZSTP*ZSER/ZX)
 RETURN
@@ -847,9 +852,10 @@ REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: PGAMMA
 !*       0.2 declarations of local variables
 !
 INTEGER                              :: JJ ! Loop index
-REAL(KIND=JPRD), DIMENSION(SIZE(PX)),VOLATILE   :: ZSER,ZSTP,ZTMP,ZX,ZY
+REAL(KIND=JPRD), DIMENSION(SIZE(PX))            :: ZSER,ZSTP,ZTMP,ZX,ZY
 REAL(KIND=JPRD)                                 :: ZCOEF(6)
 REAL(KIND=JPRD)                                 :: ZPI
+INTEGER(KIND=JPRD), DIMENSION(SIZE(PX))         :: IX
 !
 !-------------------------------------------------------------------------------
 !
@@ -879,13 +885,14 @@ DO JJ = 1 , 6
   ZY(:) = ZY(:) + 1.0_JPRD
   ZSER(:) = ZSER(:) + ZCOEF(JJ)/ZY(:)
 END DO
+ix = transfer(ZSER, 0_JPRD)
 !
 PGAMMA(:) = ZTMP(:) + BR_LOG( ZSTP*ZSER(:)/ZX(:) ) 
 RETURN
 !
 END FUNCTION BR_LOG_GAMMA_X1D_RD
 
-REAL (KIND=JPRM) FUNCTION BR_LOG_GAMMA_X0D_RM(P)
+PURE REAL (KIND=JPRM) FUNCTION BR_LOG_GAMMA_X0D_RM(P)
 !$ACC ROUTINE SEQ
 REAL (KIND=JPRM), INTENT(IN) :: P
 BR_LOG_GAMMA_X0D_RM = BR_LOG_GAMMA_X0D_RD(REAL(P,KIND=JPRD))
